@@ -8,7 +8,7 @@ colors = [
     (80, 34, 22),
     (80, 134, 22),
     (180, 34, 22),
-    (180, 34, 122),
+    (200, 120, 0),
 ]
 
 
@@ -42,16 +42,23 @@ class Figure:
 
 LINE_SCORES = [0, 100, 300, 500, 800]
 HIGHLIGHT_BRIGHTNESS = 70
+SHADOW_DARKNESS = 50
 
 
 def get_highlight_color(color):
     return tuple(min(c + HIGHLIGHT_BRIGHTNESS, 255) for c in color)
 
 
+def get_shadow_color(color):
+    return tuple(max(c - SHADOW_DARKNESS, 0) for c in color)
+
+
 def draw_block(surface, color, bx, by, bw, bh):
     pygame.draw.rect(surface, color, [bx, by, bw, bh], border_radius=4)
     highlight = get_highlight_color(color)
     pygame.draw.rect(surface, highlight, [bx + 2, by + 2, bw - 4, bh // 2], border_radius=3)
+    shadow = get_shadow_color(color)
+    pygame.draw.rect(surface, shadow, [bx + 2, by + bh // 2, bw - 4, bh // 2 - 2], border_radius=3)
 
 
 class Tetris:
@@ -155,18 +162,18 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GRAY = (128, 128, 128)
 
-size = (400, 500)
-screen = pygame.display.set_mode(size)
-
-pygame.display.set_caption("Tetris")
-
 # Loop until the user clicks the close button.
 done = False
 clock = pygame.time.Clock()
 fps = 25
 game = Tetris(20, 10)
-counter = 0
 
+size = (game.x + game.width * game.zoom, game.y + game.height * game.zoom)
+screen = pygame.display.set_mode(size)
+
+pygame.display.set_caption("Tetris")
+
+counter = 0
 pressing_down = False
 
 while not done:
@@ -203,6 +210,8 @@ while not done:
 
     screen.fill(WHITE)
 
+    pygame.draw.rect(screen, (30, 30, 30), [game.x, game.y, game.zoom * game.width, game.zoom * game.height])
+
     for i in range(game.height):
         for j in range(game.width):
             if game.field[i][j] > 0:
@@ -226,7 +235,7 @@ while not done:
                     draw_block(screen, color, bx, by, bw, bh)
 
     font = pygame.font.SysFont('Calibri', 25, True, False)
-    font1 = pygame.font.SysFont('Calibri', 65, True, False)
+    font1 = pygame.font.SysFont('Calibri', 50, True, False)
     text = font.render("Score: " + str(game.score), True, BLACK)
     text_lines = font.render("Lines: " + str(game.lines), True, BLACK)
     text_game_over = font1.render("Game Over", True, (255, 125, 0))
@@ -236,7 +245,7 @@ while not done:
     screen.blit(text_lines, [0, 30])
     if game.state == "gameover":
         screen.blit(text_game_over, [20, 200])
-        screen.blit(text_game_over1, [25, 265])
+        screen.blit(text_game_over1, [30, 255])
 
     pygame.display.flip()
     clock.tick(fps)
