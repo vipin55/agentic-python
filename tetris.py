@@ -11,6 +11,28 @@ colors = [
     (200, 120, 0),
 ]
 
+# Theme state: 'light' or 'dark'
+theme = 'light'
+
+# Background and field colors per theme
+LIGHT_BG = (255, 255, 255)
+LIGHT_FIELD_BG = (220, 220, 220)
+LIGHT_TEXT = (0, 0, 0)
+
+DARK_BG = (12, 12, 12)
+DARK_FIELD_BG = (36, 36, 36)
+DARK_TEXT = (230, 230, 230)
+
+
+def themed_color(idx):
+    base = colors[idx]
+    if theme == 'dark':
+        # brighten colors for dark background
+        return tuple(min(c + 90, 255) for c in base)
+    else:
+        # slightly darken for light background to keep contrast
+        return tuple(max(c - 60, 0) for c in base)
+
 
 class Figure:
     x = 0
@@ -203,19 +225,27 @@ while not done:
                 game.go_space()
             if event.key == pygame.K_ESCAPE:
                 game.__init__(20, 10)
+            if event.key == pygame.K_m:
+                # Toggle theme
+                theme = 'dark' if theme == 'light' else 'light'
 
     if event.type == pygame.KEYUP:
             if event.key == pygame.K_DOWN:
                 pressing_down = False
 
-    screen.fill(WHITE)
+    # Theme-aware background and field colors
+    bg = LIGHT_BG if theme == 'light' else DARK_BG
+    field_bg = LIGHT_FIELD_BG if theme == 'light' else DARK_FIELD_BG
+    text_col = LIGHT_TEXT if theme == 'light' else DARK_TEXT
 
-    pygame.draw.rect(screen, (30, 30, 30), [game.x, game.y, game.zoom * game.width, game.zoom * game.height])
+    screen.fill(bg)
+
+    pygame.draw.rect(screen, field_bg, [game.x, game.y, game.zoom * game.width, game.zoom * game.height])
 
     for i in range(game.height):
         for j in range(game.width):
             if game.field[i][j] > 0:
-                color = colors[game.field[i][j]]
+                color = themed_color(game.field[i][j])
                 bx = game.x + game.zoom * j + 1
                 by = game.y + game.zoom * i + 1
                 bw = game.zoom - 2
@@ -227,7 +257,7 @@ while not done:
             for j in range(4):
                 p = i * 4 + j
                 if p in game.figure.image():
-                    color = colors[game.figure.color]
+                    color = themed_color(game.figure.color)
                     bx = game.x + game.zoom * (j + game.figure.x) + 1
                     by = game.y + game.zoom * (i + game.figure.y) + 1
                     bw = game.zoom - 2
@@ -236,13 +266,16 @@ while not done:
 
     font = pygame.font.SysFont('Calibri', 25, True, False)
     font1 = pygame.font.SysFont('Calibri', 50, True, False)
-    text = font.render("Score: " + str(game.score), True, BLACK)
-    text_lines = font.render("Lines: " + str(game.lines), True, BLACK)
+    text = font.render("Score: " + str(game.score), True, text_col)
+    text_lines = font.render("Lines: " + str(game.lines), True, text_col)
     text_game_over = font1.render("Game Over", True, (255, 125, 0))
     text_game_over1 = font1.render("Press ESC", True, (255, 215, 0))
 
     screen.blit(text, [0, 0])
     screen.blit(text_lines, [0, 30])
+    # Toggle instruction
+    instr = font.render("M: Toggle theme", True, text_col)
+    screen.blit(instr, [game.x + game.zoom * game.width - 160, 0])
     if game.state == "gameover":
         screen.blit(text_game_over, [20, 200])
         screen.blit(text_game_over1, [30, 255])
